@@ -43,7 +43,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       .set({
         status: parsed.data.status,
         rejectionReason: parsed.data.rejectionReason ?? null,
-      })
+      } as any)
       .where(eq(bookings.id, params.id))
       .returning();
     if (!updated) return error("Booking tidak ditemukan", 404);
