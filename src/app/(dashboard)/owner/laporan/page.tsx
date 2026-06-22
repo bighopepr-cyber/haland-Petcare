@@ -62,7 +62,7 @@ export default function OwnerLaporanPage() {
 
   const exportCSV = () => {
     const headers = ["Invoice", "Total", "Metode", "Tanggal"];
-    const rows = transactions.map((t: Record<string, unknown>) => [t.invoiceNo ?? "", t.total ?? "", t.paymentMethod ?? "", t.createdAt ? new Date(t.createdAt as string).toLocaleDateString("id-ID") : ""]);
+    const rows = transactions.map((t: Record<string, unknown>) => [String(t["invoiceNo"] ?? ""), String(t["total"] ?? ""), String(t["paymentMethod"] ?? ""), t["createdAt"] ? new Date(t["createdAt"] as string).toLocaleDateString("id-ID") : ""]);
     const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
@@ -145,10 +145,10 @@ export default function OwnerLaporanPage() {
       <div className="rounded-lg border bg-white p-4 shadow-sm">
         <h3 className="text-sm font-semibold text-gray-900 mb-4">Transaksi Terbaru</h3>
         <DataTable columns={[
-          { key: "invoiceNo", header: "Invoice" },
-          { key: "total", header: "Total", render: (item: Record<string, unknown>) => `Rp ${Number(item.total).toLocaleString("id-ID")}` },
-          { key: "paymentMethod", header: "Metode" },
-          { key: "createdAt", header: "Tanggal", render: (item: Record<string, unknown>) => item.createdAt ? new Date(item.createdAt as string).toLocaleDateString("id-ID") : "-" },
+          { key: "invoiceNo", header: "Invoice", render: (item: Record<string, unknown>) => String(item["invoiceNo"] ?? "") },
+          { key: "total", header: "Total", render: (item: Record<string, unknown>) => `Rp ${Number(item["total"]).toLocaleString("id-ID")}` },
+          { key: "paymentMethod", header: "Metode", render: (item: Record<string, unknown>) => String(item["paymentMethod"] ?? "") },
+          { key: "createdAt", header: "Tanggal", render: (item: Record<string, unknown>) => item["createdAt"] ? new Date(item["createdAt"] as string).toLocaleDateString("id-ID") : "-" },
         ]} data={transactions} loading={loading} pagination />
       </div>
     </div>
