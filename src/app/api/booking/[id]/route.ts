@@ -26,7 +26,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       if (booking && booking.slotId) {
         const [slot] = await db.select().from(bookingSlots).where(eq(bookingSlots.id, booking.slotId!)).limit(1);
         if (slot) {
-          const dateStr = slot.date instanceof Date ? slot.date.toISOString().split("T")[0] : String(slot.date).split("T")[0];
+          const dateStr = String(slot.date).split("T")[0];
           await db.insert(appointments).values({
             petId: "00000000-0000-0000-0000-000000000000",
             doctorId: slot.doctorId,

@@ -38,9 +38,8 @@ export async function POST(request: Request) {
 
     const [slot] = await db.insert(bookingSlots).values({
       doctorId: parsed.data.doctorId,
-      date: new Date(parsed.data.date),
+      date: parsed.data.date,
       startTime: parsed.data.startTime,
-      endTime: parsed.data.endTime,
       maxQuota: parsed.data.maxQuota,
     }).returning();
     return success(slot, 201);

@@ -20,8 +20,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const from = searchParams.get("from"); const to = searchParams.get("to");
     const conditions: ReturnType<typeof sql>[] = [];
-    if (from) conditions.push(gte(expenses.date, new Date(from)));
-    if (to) conditions.push(lte(expenses.date, new Date(to)));
+    if (from) conditions.push(gte(expenses.date, from));
+    if (to) conditions.push(lte(expenses.date, to));
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
     const list = await db.select().from(expenses).where(whereClause).orderBy(sql`${expenses.date} desc`);
     return success(list);
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const parsed = createSchema.safeParse(body);
     if (!parsed.success) return validationError(parsed.error.flatten());
-    const [exp] = await db.insert(expenses).values({ ...parsed.data, date: new Date(parsed.data.date), receiptUrl: parsed.data.receiptUrl ?? null }).returning();
+    const [exp] = await db.insert(expenses).values({ ...parsed.data, date: parsed.data.date, receiptUrl: parsed.data.receiptUrl ?? null, createdBy: "00000000-0000-0000-0000-000000000000" }).returning();
     return success(exp, 201);
   } catch (err: unknown) {
     if (err instanceof Error && (err.message === "UNAUTHORIZED" || err.message === "FORBIDDEN")) return err.message === "UNAUTHORIZED" ? unauthorized() : forbidden();

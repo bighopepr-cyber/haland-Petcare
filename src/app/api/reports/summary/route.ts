@@ -9,15 +9,18 @@ export async function GET(request: NextRequest) {
   try {
     await requireAuth(["owner"]);
     const { searchParams } = new URL(request.url);
-    const from = searchParams.get("from") ?? new Date(new Date().setDate(1)).toISOString().split("T")[0];
-    const to = searchParams.get("to") ?? new Date().toISOString().split("T")[0];
+    const fromParam = searchParams.get("from");
+    const toParam = searchParams.get("to");
+    if (!fromParam || !toParam) return error("Parameter from dan to wajib diisi", 400);
+    const from = new Date(fromParam);
+    const to = new Date(toParam + "T23:59:59");
 
     const [revenueResult] = await db.select({ total: sql<string>`coalesce(sum(total),'0')` }).from(transactions)
-      .where(and(eq(transactions.status, "paid"), gte(transactions.createdAt, new Date(from)), lte(transactions.createdAt, new Date(to + "T23:59:59"))));
+      .where(and(eq(transactions.status, "paid"), gte(transactions.createdAt, from), lte(transactions.createdAt, to)));
     const [expenseResult] = await db.select({ total: sql<string>`coalesce(sum(amount),'0')` }).from(expenses)
-      .where(and(gte(expenses.date, new Date(from)), lte(expenses.date, new Date(to))));
+      .where(and(gte(expenses.date, fromParam), lte(expenses.date, toParam)));
     const [txCount] = await db.select({ count: sql<number>`count(*)` }).from(transactions)
-      .where(and(eq(transactions.status, "paid"), gte(transactions.createdAt, new Date(from)), lte(transactions.createdAt, new Date(to + "T23:59:59"))));
+      .where(and(eq(transactions.status, "paid"), gte(transactions.createdAt, from), lte(transactions.createdAt, to)));
 
     const pemasukan = Number(revenueResult?.total ?? 0);
     const pengeluaran = Number(expenseResult?.total ?? 0);
