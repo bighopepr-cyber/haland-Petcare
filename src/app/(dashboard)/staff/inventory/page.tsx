@@ -8,9 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { DateRangePicker } from "@/components/ui/DateRangePicker";
-import { Plus, Search, MoreVertical, Edit2, PackagePlus, TrendingUp, History, Eye } from "lucide-react";
+import { Plus, Search, MoreVertical, Edit2, PackagePlus, TrendingUp, History, Eye, X, Filter, AlertTriangle } from "lucide-react";
 
 type Tab = "products" | "mutations" | "services" | "categories";
 
@@ -22,18 +20,34 @@ interface Category { id: string; name: string; type: string; isActive: boolean; 
 export default function StaffInventoryPage() {
   const [tab, setTab] = useState<Tab>("products");
 
+  const tabs = [
+    { key: "products" as Tab, label: "Produk" },
+    { key: "mutations" as Tab, label: "Mutasi Stok" },
+    { key: "services" as Tab, label: "Layanan" },
+    { key: "categories" as Tab, label: "Kategori" },
+  ];
+
   return (
     <div className="space-y-6">
       <PageHeader title="Inventori" subtitle="Kelola produk, stok, layanan, dan kategori" />
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b pb-2">
-        {(["products", "mutations", "services", "categories"] as Tab[]).map((t) => (
-          <button key={t} onClick={() => setTab(t)}
-            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${tab === t ? "bg-white border border-b-white -mb-[3px] text-emerald-700" : "text-gray-500 hover:text-gray-700"}`}>
-            {t === "products" ? "Produk" : t === "mutations" ? "Mutasi Stok" : t === "services" ? "Layanan" : "Kategori"}
-          </button>
-        ))}
+      <div className="border-b border-slate-200">
+        <div className="flex gap-0 -mb-px">
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors ${
+                tab === t.key
+                  ? "border-teal-600 text-teal-600"
+                  : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {tab === "products" && <ProductsTab />}
@@ -58,12 +72,12 @@ function ProductsTab() {
   const [showAddStock, setShowAddStock] = useState(false);
   const [showAdjust, setShowAdjust] = useState(false);
   const [showMutations, setShowMutations] = useState(false);
+  const [showActionMenu, setShowActionMenu] = useState<string | null>(null);
   const [selected, setSelected] = useState<Product | null>(null);
   const [mutationList, setMutationList] = useState<Mutation[]>([]);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Form states
   const [fName, setFName] = useState(""); const [fCategoryId, setFCategoryId] = useState(""); const [fPrice, setFPrice] = useState("");
   const [fMinStock, setFMinStock] = useState("5"); const [fUnit, setFUnit] = useState(""); const [fStock, setFStock] = useState("0");
   const [fQtyChange, setFQtyChange] = useState(""); const [fNotes, setFNotes] = useState(""); const [fTargetStock, setFTargetStock] = useState(""); const [fReason, setFReason] = useState("");
@@ -145,59 +159,165 @@ function ProductsTab() {
 
   const resetForm = () => { setFName(""); setFCategoryId(""); setFPrice(""); setFMinStock("5"); setFUnit(""); setFStock("0"); setFQtyChange(""); setFNotes(""); setFTargetStock(""); setFReason(""); setFormError(null); setSelected(null); };
 
-  const openEdit = (p: Product) => { setSelected(p); setFName(p.name); setFCategoryId(p.categoryId); setFPrice(p.price); setFMinStock(String(p.minStock)); setFUnit(p.unit); setShowEdit(true); };
-  const openAddStock = (p: Product) => { setSelected(p); setFQtyChange(""); setFNotes(""); setShowAddStock(true); };
-  const openAdjust = (p: Product) => { setSelected(p); setFTargetStock(String(p.stock)); setFReason(""); setShowAdjust(true); };
-  const openMutations = (p: Product) => { setSelected(p); fetchMutations(p.id); setShowMutations(true); };
+  const openEdit = (p: Product) => { setSelected(p); setFName(p.name); setFCategoryId(p.categoryId); setFPrice(p.price); setFMinStock(String(p.minStock)); setFUnit(p.unit); setShowEdit(true); setShowActionMenu(null); };
+  const openAddStock = (p: Product) => { setSelected(p); setFQtyChange(""); setFNotes(""); setShowAddStock(true); setShowActionMenu(null); };
+  const openAdjust = (p: Product) => { setSelected(p); setFTargetStock(String(p.stock)); setFReason(""); setShowAdjust(true); setShowActionMenu(null); };
+  const openMutations = (p: Product) => { setSelected(p); fetchMutations(p.id); setShowMutations(true); setShowActionMenu(null); };
 
   const catOptions = categories.filter(c => c.type === "product").map(c => ({ value: c.id, label: c.name }));
 
   const columns = [
-    { key: "name", header: "Nama" },
-    { key: "price", header: "Harga", render: (item: Product) => `Rp ${Number(item.price).toLocaleString("id-ID")}` },
-    { key: "stock", header: "Stok", render: (item: Product) => <span className={`font-bold ${item.stock <= item.minStock ? "text-red-600" : ""}`}>{item.stock} {item.unit}</span> },
-    { key: "minStock", header: "Min Stok" },
+    { key: "name", header: "Nama", sortable: true },
+    { key: "price", header: "Harga", sortable: true, render: (item: Product) => `Rp ${Number(item.price).toLocaleString("id-ID")}` },
+    { key: "stock", header: "Stok", sortable: true, render: (item: Product) => (
+      <span className={`font-bold ${item.stock <= item.minStock ? "text-red-600" : "text-slate-900"}`}>
+        {item.stock} {item.unit}
+        {item.stock <= item.minStock && <AlertTriangle className="inline h-3 w-3 ml-1 text-red-500" />}
+      </span>
+    )},
+    { key: "minStock", header: "Min Stok", sortable: true },
     { key: "isActive", header: "Status", render: (item: Product) => <Badge value={item.isActive ? "active" : "inactive"} /> },
     { key: "actions", header: "Aksi", render: (item: Product) => (
-      <div className="flex gap-1">
-        <button onClick={() => openEdit(item)} className="p-1 hover:bg-gray-100 rounded"><Edit2 className="h-4 w-4 text-gray-500" /></button>
-        <button onClick={() => openAddStock(item)} className="p-1 hover:bg-gray-100 rounded"><PackagePlus className="h-4 w-4 text-emerald-500" /></button>
-        <button onClick={() => openAdjust(item)} className="p-1 hover:bg-gray-100 rounded"><TrendingUp className="h-4 w-4 text-blue-500" /></button>
-        <button onClick={() => openMutations(item)} className="p-1 hover:bg-gray-100 rounded"><History className="h-4 w-4 text-gray-500" /></button>
+      <div className="relative">
+        <button
+          onClick={() => setShowActionMenu(showActionMenu === item.id ? null : item.id)}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+        >
+          <MoreVertical className="h-4 w-4" />
+        </button>
+        {showActionMenu === item.id && (
+          <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-slate-200 bg-white py-1 shadow-lg z-50">
+            <button onClick={() => openEdit(item)} className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+              <Edit2 className="h-4 w-4" /> Edit Produk
+            </button>
+            <button onClick={() => openAddStock(item)} className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+              <PackagePlus className="h-4 w-4" /> Tambah Stok Masuk
+            </button>
+            <button onClick={() => openAdjust(item)} className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+              <TrendingUp className="h-4 w-4" /> Adjustment Stok
+            </button>
+            <button onClick={() => openMutations(item)} className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+              <History className="h-4 w-4" /> Riwayat Mutasi
+            </button>
+            <div className="border-t border-slate-100 mt-1 pt-1">
+              <button className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                <X className="h-4 w-4" /> Nonaktifkan
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     )},
   ];
 
+  // Mobile card render
+  const mobileCardRender = (item: Product) => (
+    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-start gap-3">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg">
+          📦
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-semibold text-slate-900 truncate">{item.name}</p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {categories.find(c => c.id === item.categoryId)?.name ?? "Tanpa kategori"}
+              </p>
+            </div>
+            <Badge value={item.isActive ? "active" : "inactive"} />
+          </div>
+          <p className="text-sm font-bold text-teal-600 mt-1">Rp {Number(item.price).toLocaleString("id-ID")}</p>
+          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
+            <div className="flex items-center gap-2">
+              <span className={`text-sm font-semibold ${item.stock <= item.minStock ? "text-red-600" : "text-slate-900"}`}>
+                Stok: {item.stock}
+              </span>
+              {item.stock <= item.minStock && <AlertTriangle className="h-4 w-4 text-red-500" />}
+              <span className="text-xs text-slate-400">Min: {item.minStock}</span>
+            </div>
+            <div className="relative">
+              <button
+                onClick={() => setShowActionMenu(showActionMenu === item.id ? null : item.id)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </button>
+              {showActionMenu === item.id && (
+                <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-slate-200 bg-white py-1 shadow-lg z-50">
+                  <button onClick={() => openEdit(item)} className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                    <Edit2 className="h-4 w-4" /> Edit Produk
+                  </button>
+                  <button onClick={() => openAddStock(item)} className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                    <PackagePlus className="h-4 w-4" /> Tambah Stok Masuk
+                  </button>
+                  <button onClick={() => openAdjust(item)} className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                    <TrendingUp className="h-4 w-4" /> Adjustment Stok
+                  </button>
+                  <button onClick={() => openMutations(item)} className="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                    <History className="h-4 w-4" /> Riwayat Mutasi
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
+      {/* Toolbar */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
         <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input type="text" placeholder="Cari produk..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
-            className="block w-full border border-gray-300 bg-white py-2 pl-10 pr-3 text-sm rounded-md focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Cari produk..."
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1); }}
+            className="block h-10 w-full rounded-lg border border-slate-300 bg-white pl-10 pr-3 text-sm placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+          />
         </div>
-        <select value={categoryFilter} onChange={e => { setCategoryFilter(e.target.value); setPage(1); }}
-          className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white">
+        <select
+          value={categoryFilter}
+          onChange={e => { setCategoryFilter(e.target.value); setPage(1); }}
+          className="h-10 rounded-lg border border-slate-300 px-3 text-sm bg-white"
+        >
           <option value="">Semua Kategori</option>
           {catOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
-        <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
-          className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white">
+        <select
+          value={statusFilter}
+          onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
+          className="h-10 rounded-lg border border-slate-300 px-3 text-sm bg-white"
+        >
           <option value="true">Aktif</option>
           <option value="false">Nonaktif</option>
         </select>
-        <button onClick={() => { resetForm(); setShowCreate(true); }}
-          className="ml-auto flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+        <button
+          onClick={() => { resetForm(); setShowCreate(true); }}
+          className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-teal-700 transition-colors md:ml-auto"
+        >
           <Plus className="h-4 w-4" /> Tambah Produk
         </button>
       </div>
 
-      <DataTable columns={columns} data={products} loading={loading} pagination pageSize={20} />
+      <DataTable
+        columns={columns}
+        data={products}
+        loading={loading}
+        pagination
+        pageSize={20}
+        mobileCardRender={mobileCardRender}
+        mobileTitle="name"
+      />
 
       {/* Create Modal */}
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Tambah Produk" size="md" footer={
-        <><button onClick={() => setShowCreate(false)} className="rounded-lg border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Batal</button>
-        <button onClick={handleCreate} disabled={formLoading} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm text-white hover:bg-emerald-700 disabled:opacity-50">{formLoading ? "Menyimpan..." : "Simpan"}</button></>
+        <><button onClick={() => setShowCreate(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Batal</button>
+        <button onClick={handleCreate} disabled={formLoading} className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50">{formLoading ? "Menyimpan..." : "Simpan"}</button></>
       }>
         <form onSubmit={handleCreate} className="space-y-4">
           <Input label="Nama Produk" value={fName} onChange={e => setFName(e.target.value)} required />
@@ -214,8 +334,8 @@ function ProductsTab() {
 
       {/* Edit Modal */}
       <Modal open={showEdit} onClose={() => setShowEdit(false)} title="Edit Produk" size="md" footer={
-        <><button onClick={() => setShowEdit(false)} className="rounded-lg border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Batal</button>
-        <button onClick={handleEdit} disabled={formLoading} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm text-white hover:bg-emerald-700 disabled:opacity-50">{formLoading ? "Menyimpan..." : "Simpan"}</button></>
+        <><button onClick={() => setShowEdit(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Batal</button>
+        <button onClick={handleEdit} disabled={formLoading} className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50">{formLoading ? "Menyimpan..." : "Simpan"}</button></>
       }>
         <form onSubmit={handleEdit} className="space-y-4">
           <Input label="Nama Produk" value={fName} onChange={e => setFName(e.target.value)} required />
@@ -230,9 +350,9 @@ function ProductsTab() {
       </Modal>
 
       {/* Add Stock Modal */}
-      <Modal open={showAddStock} onClose={() => setShowAddStock(false)} title="Tambah Stok" size="sm" footer={
-        <><button onClick={() => setShowAddStock(false)} className="rounded-lg border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Batal</button>
-        <button onClick={handleAddStock} disabled={formLoading} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm text-white hover:bg-emerald-700 disabled:opacity-50">{formLoading ? "Memproses..." : "Simpan"}</button></>
+      <Modal open={showAddStock} onClose={() => setShowAddStock(false)} title="Tambah Stok Masuk" size="sm" footer={
+        <><button onClick={() => setShowAddStock(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Batal</button>
+        <button onClick={handleAddStock} disabled={formLoading} className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50">{formLoading ? "Memproses..." : "Simpan"}</button></>
       }>
         <form onSubmit={handleAddStock} className="space-y-4">
           <Input label="Produk" value={selected?.name ?? ""} disabled />
@@ -246,14 +366,14 @@ function ProductsTab() {
 
       {/* Adjustment Modal */}
       <Modal open={showAdjust} onClose={() => setShowAdjust(false)} title="Adjustment Stok" size="sm" footer={
-        <><button onClick={() => setShowAdjust(false)} className="rounded-lg border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Batal</button>
-        <button onClick={handleAdjust} disabled={formLoading} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm text-white hover:bg-emerald-700 disabled:opacity-50">{formLoading ? "Memproses..." : "Simpan"}</button></>
+        <><button onClick={() => setShowAdjust(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Batal</button>
+        <button onClick={handleAdjust} disabled={formLoading} className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50">{formLoading ? "Memproses..." : "Simpan"}</button></>
       }>
         <form onSubmit={handleAdjust} className="space-y-4">
           <Input label="Produk" value={selected?.name ?? ""} disabled />
           <Input label="Stok Saat Ini" value={String(selected?.stock ?? 0)} disabled />
           <Input label="Stok Seharusnya" type="number" value={fTargetStock} onChange={e => setFTargetStock(e.target.value)} required min="0" />
-          {selected && <div className={`text-sm font-medium ${Number(fTargetStock) > selected.stock ? "text-emerald-600" : Number(fTargetStock) < selected.stock ? "text-red-600" : "text-gray-500"}`}>
+          {selected && <div className={`text-sm font-medium ${Number(fTargetStock) > selected.stock ? "text-emerald-600" : Number(fTargetStock) < selected.stock ? "text-red-600" : "text-slate-500"}`}>
             Selisih: {Number(fTargetStock) - selected.stock > 0 ? "+" : ""}{Number(fTargetStock) - selected.stock}
           </div>}
           <Input label="Alasan" value={fReason} onChange={e => setFReason(e.target.value)} required />
@@ -263,17 +383,37 @@ function ProductsTab() {
 
       {/* Mutations Drawer */}
       <Modal open={showMutations} onClose={() => setShowMutations(false)} title={`Riwayat Mutasi: ${selected?.name ?? ""}`} size="lg">
-        <table className="min-w-full text-sm">
-          <thead><tr className="border-b text-left text-xs text-gray-500"><th className="pb-2">Tanggal</th><th className="pb-2">Tipe</th><th className="pb-2">Sebelum</th><th className="pb-2">Perubahan</th><th className="pb-2">Sesudah</th><th className="pb-2">Referensi</th></tr></thead>
-          <tbody>{mutationList.map(m => <tr key={m.id} className="border-b hover:bg-gray-50">
-            <td className="py-2">{new Date(m.createdAt).toLocaleDateString("id-ID")}</td>
-            <td className="py-2"><Badge value={m.type} /></td>
-            <td className="py-2">{m.qtyBefore}</td>
-            <td className={`py-2 font-medium ${m.qtyChange > 0 ? "text-emerald-600" : "text-red-600"}`}>{m.qtyChange > 0 ? "+" : ""}{m.qtyChange}</td>
-            <td className="py-2">{m.qtyAfter}</td>
-            <td className="py-2 text-gray-500">{m.reference ?? "-"}</td>
-          </tr>)}</tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="border-b text-left text-xs text-slate-500">
+                <th className="pb-2 pr-4">Tanggal</th>
+                <th className="pb-2 pr-4">Tipe</th>
+                <th className="pb-2 pr-4">Sebelum</th>
+                <th className="pb-2 pr-4">Perubahan</th>
+                <th className="pb-2 pr-4">Sesudah</th>
+                <th className="pb-2">Referensi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {mutationList.map(m => (
+                <tr key={m.id} className="border-b hover:bg-slate-50">
+                  <td className="py-2 pr-4 text-slate-700">{new Date(m.createdAt).toLocaleDateString("id-ID")}</td>
+                  <td className="py-2 pr-4"><Badge value={m.type} /></td>
+                  <td className="py-2 pr-4 text-slate-700">{m.qtyBefore}</td>
+                  <td className={`py-2 pr-4 font-medium ${m.qtyChange > 0 ? "text-emerald-600" : "text-red-600"}`}>{m.qtyChange > 0 ? "+" : ""}{m.qtyChange}</td>
+                  <td className="py-2 pr-4 text-slate-700">{m.qtyAfter}</td>
+                  <td className="py-2 text-slate-500">{m.reference ?? "-"}</td>
+                </tr>
+              ))}
+              {mutationList.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-sm text-slate-500">Belum ada mutasi</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </Modal>
     </div>
   );
@@ -315,16 +455,20 @@ function MutationsTab() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-3 items-center">
-        <input type="text" placeholder="Filter produk..." value={productFilter} onChange={e => setProductFilter(e.target.value)} className="border border-gray-300 rounded-md px-3 py-2 text-sm" />
-        <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white">
+        <input type="text" placeholder="Filter produk..." value={productFilter} onChange={e => setProductFilter(e.target.value)}
+          className="h-10 rounded-lg border border-slate-300 px-3 text-sm bg-white" />
+        <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)}
+          className="h-10 rounded-lg border border-slate-300 px-3 text-sm bg-white">
           <option value="">Semua Tipe</option>
           <option value="in">Masuk</option>
           <option value="out">Keluar</option>
           <option value="adjustment">Adjustment</option>
         </select>
-        <input type="date" value={from} onChange={e => setFrom(e.target.value)} className="border border-gray-300 rounded-md px-3 py-2 text-sm" />
-        <span className="text-sm text-gray-500">s/d</span>
-        <input type="date" value={to} onChange={e => setTo(e.target.value)} className="border border-gray-300 rounded-md px-3 py-2 text-sm" />
+        <input type="date" value={from} onChange={e => setFrom(e.target.value)}
+          className="h-10 rounded-lg border border-slate-300 px-3 text-sm" />
+        <span className="text-sm text-slate-500">s/d</span>
+        <input type="date" value={to} onChange={e => setTo(e.target.value)}
+          className="h-10 rounded-lg border border-slate-300 px-3 text-sm" />
       </div>
       <DataTable columns={columns} data={mutations} loading={loading} />
     </div>
@@ -376,14 +520,14 @@ function ServicesTab() {
     <div className="space-y-4">
       <div className="flex justify-end">
         <button onClick={() => { setFName(""); setFCategoryId(""); setFPrice(""); setFDuration("30"); setFRequiresDoctor(false); setShowCreate(true); }}
-          className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+          className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-teal-700 transition-colors">
           <Plus className="h-4 w-4" /> Tambah Layanan
         </button>
       </div>
       <DataTable columns={columns} data={services} loading={loading} />
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Tambah Layanan" size="md" footer={
-        <><button onClick={() => setShowCreate(false)} className="rounded-lg border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Batal</button>
-        <button onClick={handleCreate} disabled={formLoading} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm text-white hover:bg-emerald-700 disabled:opacity-50">{formLoading ? "Menyimpan..." : "Simpan"}</button></>
+        <><button onClick={() => setShowCreate(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Batal</button>
+        <button onClick={handleCreate} disabled={formLoading} className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50">{formLoading ? "Menyimpan..." : "Simpan"}</button></>
       }>
         <form onSubmit={handleCreate} className="space-y-4">
           <Input label="Nama Layanan" value={fName} onChange={e => setFName(e.target.value)} required />
@@ -433,14 +577,14 @@ function CategoriesTab() {
     <div className="space-y-4">
       <div className="flex justify-end">
         <button onClick={() => { setFName(""); setFType("product"); setShowCreate(true); }}
-          className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+          className="flex items-center gap-2 rounded-lg bg-teal-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-teal-700 transition-colors">
           <Plus className="h-4 w-4" /> Tambah Kategori
         </button>
       </div>
       <DataTable columns={columns} data={categories} loading={loading} />
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Tambah Kategori" size="sm" footer={
-        <><button onClick={() => setShowCreate(false)} className="rounded-lg border px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Batal</button>
-        <button onClick={handleCreate} disabled={formLoading} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm text-white hover:bg-emerald-700 disabled:opacity-50">{formLoading ? "Menyimpan..." : "Simpan"}</button></>
+        <><button onClick={() => setShowCreate(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Batal</button>
+        <button onClick={handleCreate} disabled={formLoading} className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50">{formLoading ? "Menyimpan..." : "Simpan"}</button></>
       }>
         <form onSubmit={handleCreate} className="space-y-4">
           <Input label="Nama Kategori" value={fName} onChange={e => setFName(e.target.value)} required />

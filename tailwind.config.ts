@@ -9,6 +9,24 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        brand: {
+          50: "#f0fdf9",
+          100: "#ccfbef",
+          500: "#14b8a6",
+          600: "#0d9488",
+          700: "#0f766e",
+        },
+        surface: {
+          0: "#ffffff",
+          1: "#f8fafc",
+          2: "#f1f5f9",
+          3: "#e2e8f0",
+        },
+        text: {
+          primary: "#0f172a",
+          secondary: "#475569",
+          muted: "#94a3b8",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -47,6 +65,9 @@ const config: Config = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      fontFamily: {
+        sans: ["Inter", "system-ui", "sans-serif"],
       },
     },
   },

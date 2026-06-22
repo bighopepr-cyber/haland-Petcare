@@ -67,20 +67,20 @@ export default function CustomerPetsPage() {
         ))}
       </div>
 
-      <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Tambah Hewan" size="md" variant="friendly" footer={
-        <><button onClick={() => setShowCreate(false)} className="rounded-full border px-4 py-2 text-sm text-gray-700">Batal</button>
-        <button onClick={handleCreate} disabled={formLoading} className="rounded-full bg-teal-600 px-4 py-2 text-sm text-white disabled:opacity-50">{formLoading ? "Menyimpan..." : "Simpan"}</button></>
+      <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Tambah Hewan" size="md" footer={
+        <><button onClick={() => setShowCreate(false)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Batal</button>
+        <button onClick={handleCreate} disabled={formLoading} className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-700 disabled:opacity-50">{formLoading ? "Menyimpan..." : "Simpan"}</button></>
       }>
         <form onSubmit={handleCreate} className="space-y-4">
-          <Input label="Nama Hewan" value={fName} onChange={e => setFName(e.target.value)} required variant="friendly" />
-          <Select label="Jenis" value={fSpecies} onChange={e => setFSpecies(e.target.value)} options={[{ value: "dog", label: "Anjing" }, { value: "cat", label: "Kucing" }, { value: "bird", label: "Burung" }, { value: "fish", label: "Ikan" }, { value: "reptile", label: "Reptil" }, { value: "other", label: "Lainnya" }]} required variant="friendly" />
-          <Input label="Ras" value={fBreed} onChange={e => setFBreed(e.target.value)} variant="friendly" />
-          <Select label="Jenis Kelamin" value={fGender} onChange={e => setFGender(e.target.value)} options={[{ value: "jantan", label: "Jantan" }, { value: "betina", label: "Betina" }]} variant="friendly" />
-          <Input label="Tanggal Lahir" type="date" value={fBirthDate} onChange={e => setFBirthDate(e.target.value)} variant="friendly" />
+          <Input label="Nama Hewan" value={fName} onChange={e => setFName(e.target.value)} required />
+          <Select label="Jenis" value={fSpecies} onChange={e => setFSpecies(e.target.value)} options={[{ value: "dog", label: "Anjing" }, { value: "cat", label: "Kucing" }, { value: "bird", label: "Burung" }, { value: "fish", label: "Ikan" }, { value: "reptile", label: "Reptil" }, { value: "other", label: "Lainnya" }]} required />
+          <Input label="Ras" value={fBreed} onChange={e => setFBreed(e.target.value)} />
+          <Select label="Jenis Kelamin" value={fGender} onChange={e => setFGender(e.target.value)} options={[{ value: "jantan", label: "Jantan" }, { value: "betina", label: "Betina" }]} />
+          <Input label="Tanggal Lahir" type="date" value={fBirthDate} onChange={e => setFBirthDate(e.target.value)} />
         </form>
       </Modal>
 
-      <Modal open={!!showDetail} onClose={() => setShowDetail(null)} title={showDetail?.name ?? ""} size="lg" variant="friendly">
+      <Modal open={!!showDetail} onClose={() => setShowDetail(null)} title={showDetail?.name ?? ""} size="lg">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div><span className="text-gray-500">Jenis:</span> <span className="font-medium">{showDetail?.species}</span></div>

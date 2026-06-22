@@ -1,7 +1,5 @@
 "use client";
 
-import { type ThemeVariant } from "@/lib/utils/theme";
-
 interface SelectOption {
   value: string;
   label: string;
@@ -12,7 +10,6 @@ interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>
   error?: string;
   options: SelectOption[];
   placeholder?: string;
-  variant?: ThemeVariant;
 }
 
 export function Select({
@@ -20,7 +17,6 @@ export function Select({
   error,
   options,
   placeholder,
-  variant = "professional",
   className = "",
   required,
   id,
@@ -28,17 +24,12 @@ export function Select({
 }: SelectProps) {
   const selectId = id ?? label?.toLowerCase().replace(/\s+/g, "-");
 
-  const baseStyles =
-    variant === "professional"
-      ? "border-slate-300 focus:border-emerald-500 focus:ring-emerald-500 rounded-md text-sm"
-      : "border-gray-300 focus:border-teal-500 focus:ring-teal-500 rounded-xl text-base";
-
   return (
     <div className="space-y-1">
       {label && (
         <label
           htmlFor={selectId}
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-slate-700"
         >
           {label}
           {required && <span className="ml-1 text-red-500">*</span>}
@@ -47,8 +38,10 @@ export function Select({
       <select
         id={selectId}
         required={required}
-        className={`block w-full border bg-white px-3 py-2 shadow-sm focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:bg-gray-50 ${baseStyles} ${
-          error ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""
+        className={`block h-10 w-full rounded-lg border bg-white px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 disabled:cursor-not-allowed disabled:bg-slate-50 ${
+          error
+            ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+            : "border-slate-300"
         } ${className}`}
         {...props}
       >
@@ -63,7 +56,7 @@ export function Select({
           </option>
         ))}
       </select>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
     </div>
   );
 }

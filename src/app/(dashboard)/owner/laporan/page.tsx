@@ -86,9 +86,9 @@ export default function OwnerLaporanPage() {
 
       {/* Row 1: Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard title="Pemasukan" value={`Rp ${summary.pemasukan.toLocaleString("id-ID")}`} icon={<TrendingUp className="h-5 w-5" />} color="emerald" />
+        <StatsCard title="Pemasukan" value={`Rp ${summary.pemasukan.toLocaleString("id-ID")}`} icon={<TrendingUp className="h-5 w-5" />} color="teal" />
         <StatsCard title="Pengeluaran" value={`Rp ${summary.pengeluaran.toLocaleString("id-ID")}`} icon={<TrendingDown className="h-5 w-5" />} color="red" />
-        <StatsCard title="Laba" value={`Rp ${summary.laba.toLocaleString("id-ID")}`} icon={<DollarSign className="h-5 w-5" />} color={summary.laba >= 0 ? "emerald" : "red"} />
+        <StatsCard title="Laba" value={`Rp ${summary.laba.toLocaleString("id-ID")}`} icon={<DollarSign className="h-5 w-5" />} color={summary.laba >= 0 ? "teal" : "red"} />
         <StatsCard title="Total Transaksi" value={summary.totalTransaksi} icon={<Receipt className="h-5 w-5" />} color="blue" />
       </div>
 
