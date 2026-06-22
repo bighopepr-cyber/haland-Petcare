@@ -8,9 +8,9 @@ import { success, error, validationError, unauthorized } from "@/lib/utils/api-r
 
 const createSchema = z.object({
   slotId: z.string().uuid(),
-  ownerName: z.string().min(1),
-  ownerPhone: z.string().min(1),
-  ownerEmail: z.string().email().optional().or(z.literal("")),
+  customerName: z.string().min(1),
+  customerPhone: z.string().min(1),
+  customerEmail: z.string().email().optional().or(z.literal("")),
   petName: z.string().min(1),
   petSpecies: z.string().min(1),
   chiefComplaint: z.string().optional(),
@@ -45,9 +45,9 @@ export async function POST(request: Request) {
 
     const [booking] = await db.insert(bookings).values({
       slotId: parsed.data.slotId,
-      ownerName: parsed.data.ownerName,
-      ownerPhone: parsed.data.ownerPhone,
-      ownerEmail: parsed.data.ownerEmail || null,
+      customerName: parsed.data.customerName,
+      customerPhone: parsed.data.customerPhone,
+      customerEmail: parsed.data.customerEmail || null,
       petName: parsed.data.petName,
       petSpecies: parsed.data.petSpecies,
       chiefComplaint: parsed.data.chiefComplaint || null,

@@ -45,7 +45,7 @@ export default function BookingPage() {
     try {
       const res = await fetch("/api/booking", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slotId: selectedSlot, ownerName, ownerPhone, ownerEmail: ownerEmail || undefined, petName, petSpecies, chiefComplaint: complaint || undefined }),
+        body: JSON.stringify({ slotId: selectedSlot, customerName: ownerName, customerPhone: ownerPhone, customerEmail: ownerEmail || undefined, petName, petSpecies, chiefComplaint: complaint || undefined }),
       });
       const json = await res.json();
       if (res.ok) { setSuccess(true); toast.success("Booking berhasil dikirim!"); }

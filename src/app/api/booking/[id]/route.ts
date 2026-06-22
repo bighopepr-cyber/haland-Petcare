@@ -32,17 +32,18 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
             doctorId: slot.doctorId,
             scheduledAt: new Date(`${dateStr}T${slot.startTime}`),
             chiefComplaint: booking.chiefComplaint,
-            notes: `Booking online: ${booking.ownerName} - ${booking.petName}`,
+            notes: `Booking online: ${booking.customerName} - ${booking.petName}`,
           });
         }
       }
     }
 
-    const [updated] = await db.update(bookings)
+    const [updated] = await db
+      .update(bookings)
       .set({
         status: parsed.data.status,
         rejectionReason: parsed.data.rejectionReason ?? null,
-      } as typeof bookings.$inferInsert)
+      })
       .where(eq(bookings.id, params.id))
       .returning();
     if (!updated) return error("Booking tidak ditemukan", 404);
