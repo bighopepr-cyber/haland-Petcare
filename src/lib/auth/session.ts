@@ -15,9 +15,7 @@ export interface SessionPayload {
   name: string;
 }
 
-export async function createSession(
-  payload: SessionPayload
-): Promise<string> {
+export async function createSession(payload: SessionPayload): Promise<string> {
   return new SignJWT({ ...payload } as unknown as JWTPayload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -27,11 +25,9 @@ export async function createSession(
 
 export async function getSession(): Promise<SessionPayload | null> {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const token = cookieStore.get(COOKIE_NAME)?.value;
-
     if (!token) return null;
-
     const { payload } = await jwtVerify(token, JWT_SECRET);
     return payload as unknown as SessionPayload;
   } catch {
@@ -40,8 +36,7 @@ export async function getSession(): Promise<SessionPayload | null> {
 }
 
 export async function setSessionCookie(token: string): Promise<void> {
-  const cookieStore = cookies();
-
+  const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env["NODE_ENV"] === "production",
@@ -52,8 +47,7 @@ export async function setSessionCookie(token: string): Promise<void> {
 }
 
 export async function clearSessionCookie(): Promise<void> {
-  const cookieStore = cookies();
-
+  const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, "", {
     httpOnly: true,
     secure: process.env["NODE_ENV"] === "production",

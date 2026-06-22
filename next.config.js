@@ -1,10 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: [process.env["NEXT_PUBLIC_SUPABASE_URL"]?.replace("https://", "") ?? ""].filter(Boolean),
-  },
-  experimental: {
-    serverActions: true,
+    domains: [
+      process.env["NEXT_PUBLIC_SUPABASE_URL"]?.replace("https://", "") ?? "",
+    ].filter(Boolean),
   },
 };
 

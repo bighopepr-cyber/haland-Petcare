@@ -23,8 +23,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     // If confirming, auto-create appointment
     if (parsed.data.status === "confirmed") {
       const [booking] = await db.select().from(bookings).where(eq(bookings.id, params.id)).limit(1);
-      if (booking) {
-        const [slot] = await db.select().from(bookingSlots).where(eq(bookingSlots.id, booking.slotId)).limit(1);
+      if (booking && booking.slotId) {
+        const [slot] = await db.select().from(bookingSlots).where(eq(bookingSlots.id, booking.slotId!)).limit(1);
         if (slot) {
           const dateStr = slot.date instanceof Date ? slot.date.toISOString().split("T")[0] : String(slot.date).split("T")[0];
           await db.insert(appointments).values({

@@ -38,7 +38,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Allow public API routes
-  if (pathname.startsWith("/api/users?role=dokter") || pathname === "/api/users") {
+  if (pathname === "/api/users" && request.nextUrl.searchParams.get("role") === "dokter") {
     return NextResponse.next();
   }
 
