@@ -1,13 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatsCard } from "@/components/ui/StatsCard";
 import { DataTable } from "@/components/ui/DataTable";
 import { DollarSign, TrendingUp, TrendingDown, Receipt, Download } from "lucide-react";
-import {
-  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-} from "recharts";
 
 const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444"];
 
@@ -18,13 +15,21 @@ const presets = [
   { label: "Tahun Ini", getValue: () => { const now = new Date(); const first = new Date(now.getFullYear(), 0, 1); return { from: first.toISOString().split("T")[0]!, to: now.toISOString().split("T")[0]! }; } },
 ];
 
+const ChartSection = lazy(() => import("./ChartSection"));
+
+function ChartSkeleton() {
+  return <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="h-[350px] animate-pulse rounded-lg bg-gray-100" />
+    <div className="h-[350px] animate-pulse rounded-lg bg-gray-100" />
+  </div>;
+}
+
 export default function OwnerLaporanPage() {
   const [from, setFrom] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split("T")[0]!; });
   const [to, setTo] = useState(() => new Date().toISOString().split("T")[0]!);
   const [summary, setSummary] = useState({ pemasukan: 0, pengeluaran: 0, laba: 0, totalTransaksi: 0 });
   const [revenueData, setRevenueData] = useState<{ date: string; pemasukan: number; pengeluaran: number }[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<{ name: string; value: number }[]>([]);
-  const [topProducts, setTopProducts] = useState<{ name: string; qty: number }[]>([]);
   const [transactions, setTransactions] = useState<Record<string, unknown>[]>([]);
   const [stockAlerts, setStockAlerts] = useState<Record<string, unknown>[]>([]);
   const [doctors, setDoctors] = useState<{ name: string; total_pasien: number }[]>([]);
@@ -92,35 +97,10 @@ export default function OwnerLaporanPage() {
         <StatsCard title="Total Transaksi" value={summary.totalTransaksi} icon={<Receipt className="h-5 w-5" />} color="blue" />
       </div>
 
-      {/* Row 2: Line Chart + Pie Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="rounded-lg border bg-white p-4 shadow-sm">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4">Pemasukan vs Pengeluaran</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={revenueData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-              <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="pemasukan" stroke="#10b981" strokeWidth={2} name="Pemasukan" />
-              <Line type="monotone" dataKey="pengeluaran" stroke="#ef4444" strokeWidth={2} name="Pengeluaran" />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="rounded-lg border bg-white p-4 shadow-sm">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4">Metode Pembayaran</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie data={paymentMethods.length > 0 ? paymentMethods : [{ name: "Belum ada data", value: 1 }]} cx="50%" cy="50%" outerRadius={100} dataKey="value" label>
-                {paymentMethods.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+      {/* Row 2: Charts (dynamically loaded) */}
+      <Suspense fallback={<ChartSkeleton />}>
+        <ChartSection revenueData={revenueData} paymentMethods={paymentMethods} />
+      </Suspense>
 
       {/* Row 3: Top Products + Stock Alert */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

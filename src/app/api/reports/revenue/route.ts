@@ -18,16 +18,18 @@ export async function GET(request: NextRequest) {
 
     const dateTrunc = groupBy === "month" ? "date_trunc('month', created_at)" : groupBy === "week" ? "date_trunc('week', created_at)" : "date_trunc('day', created_at)";
 
-    const revenue = await db.execute(sql`
-      SELECT ${sql.raw(dateTrunc)} as date, coalesce(sum(total),0) as pemasukan
-      FROM transactions WHERE status='paid' AND created_at >= ${from} AND created_at <= ${to}
-      GROUP BY 1 ORDER BY 1
-    `);
-    const expenseData = await db.execute(sql`
-      SELECT ${sql.raw(dateTrunc)} as date, coalesce(sum(amount),0) as pengeluaran
-      FROM expenses WHERE date >= ${fromParam} AND date <= ${toParam}
-      GROUP BY 1 ORDER BY 1
-    `);
+    const [revenue, expenseData] = await Promise.all([
+      db.execute(sql`
+        SELECT ${sql.raw(dateTrunc)} as date, coalesce(sum(total),0) as pemasukan
+        FROM transactions WHERE status='paid' AND created_at >= ${from} AND created_at <= ${to}
+        GROUP BY 1 ORDER BY 1
+      `),
+      db.execute(sql`
+        SELECT ${sql.raw(dateTrunc)} as date, coalesce(sum(amount),0) as pengeluaran
+        FROM expenses WHERE date >= ${fromParam} AND date <= ${toParam}
+        GROUP BY 1 ORDER BY 1
+      `),
+    ]);
 
     return success({ revenue: revenue as unknown as Record<string, unknown>[], expenses: expenseData as unknown as Record<string, unknown>[] });
   } catch (err: unknown) {

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
-import { X } from "lucide-react";
 
 interface Inpatient { id: string; petId: string; cageNumber: string; admittedAt: string; status: string; diagnosis: string | null; }
 interface InpatientLog { id: string; condition: string; notes: string | null; photos: string[]; isVisibleCustomer: boolean; loggedAt: string; }
@@ -98,8 +98,8 @@ export default function CustomerMonitoringPage() {
                         {log.photos && log.photos.length > 0 && (
                           <div className="mt-2 flex gap-2 flex-wrap">
                             {log.photos.map((url, i) => (
-                              <button key={i} onClick={() => setSelectedPhoto(url)} className="h-16 w-16 overflow-hidden rounded-lg border">
-                                <img src={url} alt={`Foto ${i + 1}`} className="h-full w-full object-cover" />
+                              <button key={i} onClick={() => setSelectedPhoto(url)} className="h-16 w-16 overflow-hidden rounded-lg border relative">
+                                <Image src={url} alt={`Foto ${i + 1}`} fill className="object-cover" sizes="64px" />
                               </button>
                             ))}
                           </div>
@@ -116,7 +116,11 @@ export default function CustomerMonitoringPage() {
 
       {/* Photo Lightbox */}
       <Modal open={!!selectedPhoto} onClose={() => setSelectedPhoto(null)} title="" size="lg">
-        {selectedPhoto && <img src={selectedPhoto} alt="Foto" className="max-h-[70vh] mx-auto rounded-lg" />}
+        {selectedPhoto && (
+          <div className="relative max-h-[70vh] min-h-[300px] w-full">
+            <Image src={selectedPhoto} alt="Foto" fill className="object-contain rounded-lg" sizes="(max-width: 768px) 100vw, 50vw" />
+          </div>
+        )}
       </Modal>
     </div>
   );

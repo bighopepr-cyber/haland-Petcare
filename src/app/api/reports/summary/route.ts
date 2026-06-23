@@ -15,12 +15,14 @@ export async function GET(request: NextRequest) {
     const from = new Date(fromParam);
     const to = new Date(toParam + "T23:59:59");
 
-    const [revenueResult] = await db.select({ total: sql<string>`coalesce(sum(total),'0')` }).from(transactions)
-      .where(and(eq(transactions.status, "paid"), gte(transactions.createdAt, from), lte(transactions.createdAt, to)));
-    const [expenseResult] = await db.select({ total: sql<string>`coalesce(sum(amount),'0')` }).from(expenses)
-      .where(and(gte(expenses.date, fromParam), lte(expenses.date, toParam)));
-    const [txCount] = await db.select({ count: sql<number>`count(*)` }).from(transactions)
-      .where(and(eq(transactions.status, "paid"), gte(transactions.createdAt, from), lte(transactions.createdAt, to)));
+    const [[revenueResult], [expenseResult], [txCount]] = await Promise.all([
+      db.select({ total: sql<string>`coalesce(sum(total),'0')` }).from(transactions)
+        .where(and(eq(transactions.status, "paid"), gte(transactions.createdAt, from), lte(transactions.createdAt, to))),
+      db.select({ total: sql<string>`coalesce(sum(amount),'0')` }).from(expenses)
+        .where(and(gte(expenses.date, fromParam), lte(expenses.date, toParam))),
+      db.select({ count: sql<number>`count(*)` }).from(transactions)
+        .where(and(eq(transactions.status, "paid"), gte(transactions.createdAt, from), lte(transactions.createdAt, to))),
+    ]);
 
     const pemasukan = Number(revenueResult?.total ?? 0);
     const pengeluaran = Number(expenseResult?.total ?? 0);

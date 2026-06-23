@@ -5,6 +5,7 @@ import { eq, sql, and, gte, lte } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { Calendar, DollarSign, Package, Clock, AlertTriangle, ArrowRight } from "lucide-react";
 import Link from "next/link";
+export const revalidate = 60;
 
 async function getDashboardData() {
   const session = await getSession();

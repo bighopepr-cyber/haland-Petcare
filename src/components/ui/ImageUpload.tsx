@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, type DragEvent } from "react";
+import Image from "next/image";
 import { Upload, X } from "lucide-react";
 import { type ThemeVariant } from "@/lib/utils/theme";
 
@@ -90,10 +91,13 @@ export function ImageUpload({
       >
         {preview ? (
           <div className="relative">
-            <img
+            <Image
               src={preview}
               alt="Preview"
+              width={384}
+              height={192}
               className="max-h-48 rounded object-contain"
+              style={{ width: "auto", height: "auto", maxHeight: "12rem" }}
             />
             <button
               onClick={(e) => {
